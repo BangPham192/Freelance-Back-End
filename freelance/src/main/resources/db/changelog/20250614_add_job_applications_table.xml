@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="20250614_add_job_applications_table" author="bang.pham">
+        <createTable tableName="job_applications">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="public_id" type="binary(16)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="cover_letter" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_fee" type="decimal(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(10)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="applied_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="job_id" type="bigint">
+                <constraints foreignKeyName="fk_proposals_job_id" references="jobs(id)" nullable="false"/>
+            </column>
+            <column name="freelancer_id" type="bigint">
+                <constraints foreignKeyName="fk_proposals_freelancer_id" references="users(id)" nullable="false"/>
+            </column>
+
+            <column name="created_at" type="datetime"/>
+            <column name="updated_at" type="datetime"/>
+        </createTable>
+        <modifySql dbms="mysql">
+            <append value="engine innodb"/>
+        </modifySql>
+    </changeSet>
+</databaseChangeLog>
