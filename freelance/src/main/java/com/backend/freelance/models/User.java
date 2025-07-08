@@ -22,14 +22,17 @@ public class User extends BaseEntity{
     private String email;
     private String password;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UserRole> roles = new ArrayList<>();
-
     @Column(name = "locked_at")
     public LocalDateTime lockedAt;
 
     @Column(name = "expired_at")
     public LocalDateTime expiredAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserRole> roles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "freelancer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobApplications> jobApplications = new ArrayList<>();
 
 
 }
