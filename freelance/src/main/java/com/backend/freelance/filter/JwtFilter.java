@@ -1,9 +1,8 @@
 package com.backend.freelance.filter;
 
-import com.backend.freelance.models.User;
-import com.backend.freelance.repository.UserRepository;
 import com.backend.freelance.services.CustomUserDetailsService;
 import com.backend.freelance.services.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,23 +30,28 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         String authorizationHeader = request.getHeader("Authorization");
-
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
-            String username = jwtService.extractUsername(token);
-
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-                if (userDetails != null && jwtService.validateToken(token, userDetails.getUsername())) {
-                    UsernamePasswordAuthenticationToken authentication =
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                String username = jwtService.extractUsername(token);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+                    if (userDetails != null && jwtService.validateToken(token, userDetails.getUsername())) {
+                        UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
-            }
-        }
 
-        filterChain.doFilter(request, response);
+
+            }
+            filterChain.doFilter(request, response);
+        } catch (JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"JWT token expired\"}");
+        }
     }
 }

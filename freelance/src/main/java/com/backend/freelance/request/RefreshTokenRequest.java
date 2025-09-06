@@ -1,4 +1,4 @@
-package com.backend.freelance.dtos;
+package com.backend.freelance.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthTokenDto {
-    public String accessToken;
-    public String refreshToken;
+public class RefreshTokenRequest {
+    private String refreshToken;
 }

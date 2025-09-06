@@ -23,6 +23,9 @@ public class JobApplications extends BaseEntity{
     @Column(name = "expected_fee", precision = 19, scale = 2)
     private BigDecimal expectedFee;
 
+    @Column(name = "estimated_time")
+    private int estimatedTime;
+
     @Enumerated(EnumType.STRING)
     private JobApplicationsStatus status;
 

@@ -1,6 +1,5 @@
 package com.backend.freelance.dtos;
 
-
 import com.backend.freelance.models.JobApplicationsStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,12 +13,11 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobApplicationDto {
+public class JobApplicationBaseDto {
     private String coverLetter;
     private BigDecimal expectedFee;
     private int estimatedTime;
     private String attachmentUrl;
     private JobApplicationsStatus applicationsStatus;
-    private JobDto job;
     private LocalDateTime createdAt;
 }

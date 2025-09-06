@@ -23,4 +23,6 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
             relativeToChangelogFile="true"/>
 <include file="changelog/20250630_add_column_attachment_url_in_to_job_applications_table.xml"
             relativeToChangelogFile="true"/>
+<include file="changelog/20250709_add_estimated_time_column_in_to_jobs_applications_table.xml"
+            relativeToChangelogFile="true"/>
 </databaseChangeLog>

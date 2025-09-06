@@ -1,4 +1,4 @@
-package com.backend.freelance.http.page;
+package com.backend.freelance.http;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -8,6 +8,7 @@ import com.backend.freelance.models.UserRole;
 import com.backend.freelance.repository.UserRepository;
 import com.backend.freelance.repository.UserRolesRepository;
 import com.backend.freelance.request.UserCreateRequest;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -61,5 +62,17 @@ public class UserService {
                 .map(Role::name)
                 .toList());
         return userDto;
+    }
+
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        User user = userRepository.findByEmail(username);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }
