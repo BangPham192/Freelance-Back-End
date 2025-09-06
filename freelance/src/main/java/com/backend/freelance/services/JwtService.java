@@ -33,11 +33,11 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, long expirationMillis) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Token valid for 10 hours
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(io.jsonwebtoken.SignatureAlgorithm.HS256, SECRET) // Replace with your actual secret key
                 .compact();
     }

@@ -3,20 +3,19 @@ package com.backend.freelance.controllers;
 import com.backend.freelance.dtos.JobApplicationDto;
 import com.backend.freelance.dtos.JobDto;
 import com.backend.freelance.dtos.SkillDto;
-import com.backend.freelance.http.page.PageRequestCustom;
+import com.backend.freelance.http.PageRequestCustom;
 import com.backend.freelance.interfaces.IJobController;
+import com.backend.freelance.models.JobApplicationsStatus;
 import com.backend.freelance.request.CreateJobRequest;
 import com.backend.freelance.request.JobApplyRequest;
 import com.backend.freelance.services.JobService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -68,8 +67,14 @@ public class JobController extends BaseController implements IJobController {
     }
 
     @Override
-    public Page<JobApplicationDto> getMyJobApplications(PageRequestCustom pageRequest) {
+    public Page<JobApplicationDto> getMyJobApplicationsByStatuses(PageRequestCustom pageRequest) {
         String username = getCurrentUser().getUsername();
-        return jobService.getMyJobApplications(pageRequest, username);
+        return jobService.getMyJobApplicationsByStatuses(pageRequest, List.of(JobApplicationsStatus.APPLICATIONS_STATUSES), username);
+    }
+
+    @Override
+    public Page<JobApplicationDto> getMyActiveJobApplications(PageRequestCustom pageRequest) {
+        String username = getCurrentUser().getUsername();
+        return jobService.getMyJobApplicationsByStatuses(pageRequest, List.of(JobApplicationsStatus.ACCEPTED), username);
     }
 }

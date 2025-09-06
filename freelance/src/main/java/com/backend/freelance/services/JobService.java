@@ -3,7 +3,7 @@ package com.backend.freelance.services;
 import com.backend.freelance.dtos.JobApplicationDto;
 import com.backend.freelance.dtos.JobDto;
 import com.backend.freelance.dtos.SkillDto;
-import com.backend.freelance.http.page.PageRequestCustom;
+import com.backend.freelance.http.PageRequestCustom;
 import com.backend.freelance.mapper.JobsMapper;
 import com.backend.freelance.models.*;
 import com.backend.freelance.repository.*;
@@ -111,6 +111,13 @@ public class JobService {
                 .filter(java.util.Objects::nonNull)
                 .toList();
         jobDto.setSkills(skillIds);
+
+        // Fetch job applications if needed
+        List<JobApplicationDto> applications = jobApplicationRepository.findAllByJobIdAndStatusIn(job.getId(),
+                List.of(JobApplicationsStatus.PENDING)).stream()
+                .map(JobsMapper.INSTANCE::mapApplications)
+                .toList();
+        jobDto.setJobApplications(applications);
         return jobDto;
     }
 
@@ -142,7 +149,7 @@ public class JobService {
 
 
         // Create a new JobApplication
-        JobApplications application = JobsMapper.INSTANCE.mspFromRequest(request);
+        JobApplications application = JobsMapper.INSTANCE.mapFromRequest(request);
         application.setJob(job);
         application.setFreelancer(user);
         application.setStatus(JobApplicationsStatus.PENDING);
@@ -156,10 +163,10 @@ public class JobService {
                 .body(HttpStatus.CREATED);
     }
 
-    public Page<JobApplicationDto> getMyJobApplications(PageRequestCustom pageRequest, String username) {
+    public Page<JobApplicationDto> getMyJobApplicationsByStatuses(PageRequestCustom pageRequest, List<JobApplicationsStatus> statuses, String username) {
         PageRequest page = PageRequest.of(pageRequest.getPage(), pageRequest.getPageSize(), Sort.by(Sort.Direction.DESC, "appliedAt"));
         User user = userRepository.findByEmail(username);
-        Page<JobApplications> applications = jobApplicationRepository.findAllByFreelancerId(user.getId(), page);
+        Page<JobApplications> applications = jobApplicationRepository.findAllByFreelancerIdAndStatusIn(user.getId(), statuses, page);
         if (applications.isEmpty()) {
             return new PageImpl<>(new LinkedList<>(), page, 0);
         }

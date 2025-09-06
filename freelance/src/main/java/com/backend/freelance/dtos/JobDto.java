@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,4 +27,5 @@ public class JobDto {
     private BigDecimal budgetMax;
     private List<String> skills;
     private String clientName;
+    private List<JobApplicationDto> jobApplications;
 }

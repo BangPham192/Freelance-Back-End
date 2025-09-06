@@ -3,9 +3,8 @@ package com.backend.freelance.interfaces;
 import com.backend.freelance.dtos.JobApplicationDto;
 import com.backend.freelance.dtos.JobDto;
 import com.backend.freelance.dtos.SkillDto;
-import com.backend.freelance.http.page.PageRequestCustom;
+import com.backend.freelance.http.PageRequestCustom;
 import com.backend.freelance.request.CreateJobRequest;
-import com.backend.freelance.request.JobApplyRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,5 +36,8 @@ public interface IJobController {
                                            @RequestPart(value = "data", required = false) String jsonData,
                                            @RequestPart(value = "files", required = false) MultipartFile files);
     @GetMapping("/applications")
-    Page<JobApplicationDto> getMyJobApplications(PageRequestCustom pageRequest);
+    Page<JobApplicationDto> getMyJobApplicationsByStatuses(PageRequestCustom pageRequest);
+
+    @GetMapping("/applications/active")
+    Page<JobApplicationDto> getMyActiveJobApplications(PageRequestCustom pageRequest);
 }

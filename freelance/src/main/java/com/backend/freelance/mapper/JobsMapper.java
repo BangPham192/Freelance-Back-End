@@ -36,9 +36,11 @@ public interface JobsMapper {
 
     @Mapping(target = "publicId", expression = "java(UUID.randomUUID())")
     @Mapping(target = "expectedFee", source = "expectedFee", qualifiedByName = "mapDecimal")
-    JobApplications mspFromRequest(JobApplyRequest request);
+    @Mapping(target = "estimatedTime", expression = "java(Integer.parseInt(request.getEstimatedTime()))")
+    JobApplications mapFromRequest(JobApplyRequest request);
 
     @Mapping(target = "applicationsStatus", source = "status")
+    @Mapping(target = "job", ignore = true)
     JobApplicationDto mapApplications(JobApplications jobApplications);
 
     @Named("mapDecimal")
