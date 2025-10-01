@@ -1,6 +1,7 @@
 package com.backend.freelance.services;
 
 import com.backend.freelance.dtos.JobApplicationDto;
+import com.backend.freelance.dtos.JobApplyEvent;
 import com.backend.freelance.dtos.JobDto;
 import com.backend.freelance.dtos.SkillDto;
 import com.backend.freelance.http.PageRequestCustom;
@@ -9,6 +10,7 @@ import com.backend.freelance.models.*;
 import com.backend.freelance.repository.*;
 import com.backend.freelance.request.CreateJobRequest;
 import com.backend.freelance.request.JobApplyRequest;
+import com.backend.freelance.sender.JobApplyProducer;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,19 +38,22 @@ public class JobService {
     private final JobSkillsRepository jobSkillsRepository;
     private final JobApplicationsRepository jobApplicationRepository;
     private final FileStorageService fileService;
+    private final JobApplyProducer jobApplyProducer;
 
     @Autowired
     public JobService(JobsRepository jobsRepository, UserRepository userRepository,
                       SkillsRepository skillsRepository,
                       JobSkillsRepository jobSkillsRepository,
                       JobApplicationsRepository jobApplicationRepository,
-                      FileStorageService fileService) {
+                      FileStorageService fileService,
+                      JobApplyProducer jobApplyProducer) {
         this.jobsRepository = jobsRepository;
         this.userRepository = userRepository;
         this.skillsRepository = skillsRepository;
         this.jobSkillsRepository = jobSkillsRepository;
         this.jobApplicationRepository = jobApplicationRepository;
         this.fileService = fileService;
+        this.jobApplyProducer = jobApplyProducer;
     }
 
     @Transactional
@@ -158,6 +163,17 @@ public class JobService {
 
         // Save the application (assuming you have a JobApplicationRepository)
          jobApplicationRepository.save(application);
+
+        JobApplyEvent event = JobApplyEvent.builder()
+            .jobName(job.getTitle())
+            .freelancerEmail(user.getEmail())
+            .clientEmail(job.getUser().getEmail())
+            .body(application.getCoverLetter())
+            .attachmentUrl(fileUrls.isEmpty() ? null : fileUrls.getFirst())
+            .build();
+
+        // Produce a Kafka event
+        jobApplyProducer.sendJobAppliedEvent(event);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(HttpStatus.CREATED);
