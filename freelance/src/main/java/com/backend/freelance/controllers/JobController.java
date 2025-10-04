@@ -9,8 +9,10 @@ import com.backend.freelance.models.JobApplicationsStatus;
 import com.backend.freelance.request.CreateJobRequest;
 import com.backend.freelance.request.JobApplyRequest;
 import com.backend.freelance.services.JobService;
+import com.backend.freelance.services.MailService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -26,10 +28,13 @@ import java.util.UUID;
 @RestController
 public class JobController extends BaseController implements IJobController {
     private final JobService jobService;
+    private final MailService mailService;
 
     @Autowired
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService,
+        MailService mailService) {
         this.jobService = jobService;
+        this.mailService = mailService;
     }
 
     @Override
@@ -57,7 +62,7 @@ public class JobController extends BaseController implements IJobController {
     public ResponseEntity<HttpStatus> applyForJob(UUID id, String jsonData, MultipartFile files) {
         String username = getCurrentUser().getUsername();
         ObjectMapper mapper = new ObjectMapper();
-        JobApplyRequest request = null;
+        JobApplyRequest request;
         try {
             request = mapper.readValue(jsonData, JobApplyRequest.class);
         } catch (JsonProcessingException e) {
@@ -76,5 +81,10 @@ public class JobController extends BaseController implements IJobController {
     public Page<JobApplicationDto> getMyActiveJobApplications(PageRequestCustom pageRequest) {
         String username = getCurrentUser().getUsername();
         return jobService.getMyJobApplicationsByStatuses(pageRequest, List.of(JobApplicationsStatus.ACCEPTED), username);
+    }
+
+    @Override
+    public void sendEmailToEmployer(String to, String subject, String body, String filePath) throws MessagingException {
+        mailService.sendMailWithAttachment(new String[]{to}, subject, body, filePath);
     }
 }

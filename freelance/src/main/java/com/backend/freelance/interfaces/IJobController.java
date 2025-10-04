@@ -5,6 +5,7 @@ import com.backend.freelance.dtos.JobDto;
 import com.backend.freelance.dtos.SkillDto;
 import com.backend.freelance.http.PageRequestCustom;
 import com.backend.freelance.request.CreateJobRequest;
+import jakarta.mail.MessagingException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,4 +41,10 @@ public interface IJobController {
 
     @GetMapping("/applications/active")
     Page<JobApplicationDto> getMyActiveJobApplications(PageRequestCustom pageRequest);
+
+    @PostMapping("send-email")
+    void sendEmailToEmployer(@RequestParam("to") String to,
+                            @RequestParam("subject") String subject,
+                            @RequestParam("body") String body,
+                            @RequestParam(value = "filePath", required = false) String filePath) throws MessagingException;
 }
