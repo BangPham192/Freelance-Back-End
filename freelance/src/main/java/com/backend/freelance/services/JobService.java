@@ -63,7 +63,7 @@ public class JobService {
         // save job
         Jobs job = JobsMapper.INSTANCE.createJob(request);
         job.setUser(user);
-        job.setStatus(JobStatus.IN_PROGRESS);
+        job.setStatus(JobStatus.OPEN);
         jobsRepository.save(job);
 
         // save job skills
@@ -87,7 +87,7 @@ public class JobService {
 
     public Page<JobDto> getAllJobs(PageRequestCustom pageRequest) {
         PageRequest page = PageRequest.of(pageRequest.getPage(), pageRequest.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Jobs> jobsPage = jobsRepository.findAll(page);
+        Page<Jobs> jobsPage = jobsRepository.findAllByStatus(JobStatus.OPEN, page);
         if (jobsPage.getTotalElements() == 0) {
             return new PageImpl<>(new ArrayList<>());
         }
@@ -152,6 +152,11 @@ public class JobService {
 //            }
         }
 
+        // update jobs status if it's still open
+        if (job.getStatus() == JobStatus.OPEN) {
+            job.setStatus(JobStatus.IN_PROGRESS);
+            jobsRepository.save(job);
+        }
 
         // Create a new JobApplication
         JobApplications application = JobsMapper.INSTANCE.mapFromRequest(request);
