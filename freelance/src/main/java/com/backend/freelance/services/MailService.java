@@ -1,5 +1,6 @@
 package com.backend.freelance.services;
 
+import com.backend.freelance.ConfigReader;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.apache.commons.lang3.StringUtils;
@@ -16,9 +17,22 @@ import java.util.List;
 public class MailService {
 
     private final JavaMailSender mailSender;
+    private final ConfigReader configReader;
 
-    public MailService(JavaMailSender mailSender) {
+    public MailService(JavaMailSender mailSender,  ConfigReader configReader) {
         this.mailSender = mailSender;
+        this.configReader = configReader;
+    }
+
+    public void sendMail(String[] recipients, String subject, String htmlContent) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+        helper.setFrom(configReader.getMailFrom());
+        helper.setTo(recipients);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+        mailSender.send(mimeMessage);
+        System.out.println("Mail Sent to " + Arrays.toString(recipients));
     }
 
     public void sendMailWithAttachment(String[] recipients, String subject, String htmlContent, String filePath) throws MessagingException {
@@ -27,7 +41,7 @@ public class MailService {
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 
-        helper.setFrom("phamxuanbang0592@gmail.com");
+        helper.setFrom(configReader.getMailFrom());
         helper.setTo(recipients);
         helper.setSubject(subject);
 

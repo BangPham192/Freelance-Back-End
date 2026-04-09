@@ -3,8 +3,10 @@ package com.backend.freelance.interfaces;
 import com.backend.freelance.dtos.AuthTokenDto;
 import com.backend.freelance.dtos.UserDto;
 import com.backend.freelance.request.ChangePassWordRequest;
+import com.backend.freelance.request.ForgotPasswordRequest;
 import com.backend.freelance.request.LoginRequest;
 import com.backend.freelance.request.RefreshTokenRequest;
+import com.backend.freelance.request.ResetPasswordRequest;
 import com.backend.freelance.request.UserCreateRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -28,5 +30,11 @@ public interface IAuthenticationController {
 
     @PostMapping("/change-password")
     void changePassword(@RequestBody @Validated ChangePassWordRequest request);
+
+    @PostMapping("/forgot-password")
+    ResponseEntity<Void> forgotPassword(@RequestBody @Validated ForgotPasswordRequest request);
+
+    @PostMapping("/reset-password")
+    ResponseEntity<Void> resetPassword(@RequestBody @Validated ResetPasswordRequest request);
 
 }

@@ -3,11 +3,14 @@ package com.backend.freelance.controllers;
 import com.backend.freelance.dao.impl.RefreshTokenDaoImpl;
 import com.backend.freelance.dtos.AuthTokenDto;
 import com.backend.freelance.dtos.UserDto;
+import com.backend.freelance.exception.ExceptionHelper;
 import com.backend.freelance.interfaces.IAuthenticationController;
 import com.backend.freelance.models.User;
 import com.backend.freelance.request.ChangePassWordRequest;
+import com.backend.freelance.request.ForgotPasswordRequest;
 import com.backend.freelance.request.LoginRequest;
 import com.backend.freelance.request.RefreshTokenRequest;
+import com.backend.freelance.request.ResetPasswordRequest;
 import com.backend.freelance.request.UserCreateRequest;
 import com.backend.freelance.services.JwtService;
 import com.backend.freelance.services.UserService;
@@ -50,7 +53,7 @@ public class AuthenticationController extends BaseController implements IAuthent
             refreshTokenDao.storeRefreshToken(request.getUsername(), authTokenDto.getRefreshToken());
             return authTokenDto;
         } catch (Exception e) {
-            throw new RuntimeException("Error during login: " + e.getMessage());
+           throw ExceptionHelper.UNAUTHORIZED.throwCustomException("Error during login: " + e.getMessage(), null);
         }
     }
 
@@ -76,7 +79,7 @@ public class AuthenticationController extends BaseController implements IAuthent
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             return userService.getMySelf(userDetails.getUsername());
         } catch (Exception e) {
-            throw new RuntimeException("Error retrieving user information: " + e.getMessage());
+            throw ExceptionHelper.UNAUTHORIZED.throwCustomException("Error retrieving user information: " + e.getMessage(), null);
         }
     }
 
@@ -85,18 +88,18 @@ public class AuthenticationController extends BaseController implements IAuthent
         try {
             String token = request.getRefreshToken();
             if (token == null || token.isEmpty()) {
-                throw new RuntimeException("Refresh token is required");
+                ExceptionHelper.UNAUTHORIZED.throwCustomException("Refresh token is required", null);
             }
             String username = jwtService.extractUsername(token);
             // add logic validate token form redis
             String refreshTokenFromRedis = refreshTokenDao.getRefreshTokenByUsername(username);
             if (refreshTokenFromRedis == null || !refreshTokenFromRedis.equals(token)) {
-                throw new RuntimeException("Invalid or expired refresh token");
+                ExceptionHelper.UNAUTHORIZED.throwCustomException("Invalid or expired refresh token", null);
             }
 
             User user = userService.getUserByEmail(username);
             if (user == null) {
-                throw new RuntimeException("User not found");
+                ExceptionHelper.UNAUTHORIZED.throwCustomException("User not found", null);
             }
             // Generate a new token with a validity of 7 days
             String newToken = jwtService.generateToken(username, 5 * 60 * 1000); // 5 minutes in milliseconds
@@ -106,7 +109,7 @@ public class AuthenticationController extends BaseController implements IAuthent
             authTokenDto.setRefreshToken(newRefreshToken); // Keep the same refresh token
             return authTokenDto;
         } catch (Exception e) {
-            throw new RuntimeException("Error refreshing token: " + e.getMessage());
+            throw ExceptionHelper.UNAUTHORIZED.throwCustomException("Error refreshing token: " + e.getMessage(), null);
         }
     }
 
@@ -116,14 +119,27 @@ public class AuthenticationController extends BaseController implements IAuthent
             String username = getCurrentUser().getUsername();
             userService.changePassword(username, request.getOldPassword(), request.getNewPassword());
         } catch (Exception e) {
-            throw new RuntimeException("Error changing password: " + e.getMessage());
+            ExceptionHelper.UNAUTHORIZED.throwCustomException("Error changing password: " + e.getMessage(), null);
         }
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body("An error occurred: " + e.getMessage());
+    @Override
+    public ResponseEntity<Void> forgotPassword(ForgotPasswordRequest request) {
+        try {
+            userService.forgotPassword(request.getEmail());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            throw ExceptionHelper.INTERNAL_SERVER_ERROR.throwCustomException("Error processing forgot password request: " + e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public ResponseEntity<Void> resetPassword(ResetPasswordRequest request) {
+        try {
+            userService.resetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            throw ExceptionHelper.BAD_REQUEST.throwCustomException("Error resetting password: " + e.getMessage(), null);
+        }
     }
 }
