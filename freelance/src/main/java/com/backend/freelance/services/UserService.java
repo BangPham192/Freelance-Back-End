@@ -1,5 +1,7 @@
 package com.backend.freelance.services;
 
+import com.backend.freelance.ConfigReader;
+import com.backend.freelance.dao.IPasswordResetTokenDao;
 import com.backend.freelance.dtos.UserDto;
 import com.backend.freelance.mapper.UserMapper;
 import com.backend.freelance.models.Role;
@@ -8,7 +10,7 @@ import com.backend.freelance.models.UserRole;
 import com.backend.freelance.repository.UserRepository;
 import com.backend.freelance.repository.UserRolesRepository;
 import com.backend.freelance.request.UserCreateRequest;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,16 +20,27 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+    private static final long PASSWORD_RESET_TTL_SECONDS = 15 * 60; // 15 minutes
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRolesRepository userRolesRepository;
+    private final IPasswordResetTokenDao passwordResetTokenDao;
+    private final MailService mailService;
+    private final ConfigReader configReader;
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       UserRolesRepository userRolesRepository) {
+                       UserRolesRepository userRolesRepository,
+                       IPasswordResetTokenDao passwordResetTokenDao,
+                       MailService mailService,
+                       ConfigReader configReader) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRolesRepository = userRolesRepository;
+        this.passwordResetTokenDao = passwordResetTokenDao;
+        this.mailService = mailService;
+        this.configReader = configReader;
     }
 
     public void createUser(UserCreateRequest request) {
@@ -74,5 +87,39 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    public void forgotPassword(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            // Do not reveal whether the email exists
+            return;
+        }
+        String token = UUID.randomUUID().toString();
+        passwordResetTokenDao.storeResetToken(token, email, PASSWORD_RESET_TTL_SECONDS);
+
+        String resetLink = String.format("%s/reset-password?token=%s", configReader.getFrontendUrl(), token);
+        String subject = "Password Reset Request";
+        String htmlContent = "<p>Hello <b>" + user.getUsername() + "</b>,</p>"
+                + "<p>We received a request to reset your password. Click the link below to reset it:</p>"
+                + "<p><a href=\"" + resetLink + "\">Reset Password</a></p>"
+                + "<p>This link will expire in <b>15 minutes</b>.</p>"
+                + "<p>If you did not request a password reset, please ignore this email.</p>";
+
+        mailService.sendMail(new String[]{email}, subject, htmlContent);
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        String email = passwordResetTokenDao.getEmailByToken(token);
+        if (email == null) {
+            throw new RuntimeException("Invalid or expired password reset token");
+        }
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        passwordResetTokenDao.deleteResetToken(token);
     }
 }
